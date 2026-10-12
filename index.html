@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Zettel">
+<title>Zettelkasten</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{color-scheme:dark;box-sizing:border-box;--bg:#0b0b0c;--card:#161618;--card2:#1e1e21;--line:#2a2a2f;--txt:#f2f2f2;--mut:#8b8b94;--red:#e0334a;--red2:#7a1624;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px}
+header{position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);border-bottom:1px solid var(--line);padding:12px 16px;z-index:5}
+h1{font-size:18px;margin:0;letter-spacing:.5px}
+h1 span{color:var(--red)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+select,input,textarea{background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font-size:15px;min-width:0;font-family:inherit}
+button{background:var(--red);color:#fff;border:0;border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer;font-size:14px}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--mut)}
+button.on{background:var(--red2);color:#fff}
+select option{background:#1e1e21;color:#f2f2f2}
+.wrap{display:grid;grid-template-columns:300px 1fr;gap:14px;max-width:1200px;margin:0 auto;padding:14px}
+aside{max-height:calc(100vh - 150px);overflow:auto;position:sticky;top:130px;align-self:start;border:1px solid var(--line);border-radius:14px;background:var(--card);padding:6px}
+main{min-width:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.mut{color:var(--mut);font-size:13px}
+.lin{display:flex;gap:10px;padding:9px 10px;border-radius:10px;cursor:pointer;align-items:baseline}
+.lin:hover{background:var(--card2)}
+.lin.on{background:var(--red2)}
+#bIndice,#bGrafo{display:none}
+.lin.lk{box-shadow:inset 3px 0 0 #3ec07a;background:#1e1e21}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:14px}
+.thumbs img{width:100%;height:auto;border-radius:6px;border:1px solid #2a2a2f;display:block}
+.id{color:var(--red);font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;white-space:nowrap}
+.lin.on .id{color:#fff}
+.chip{display:inline-block;padding:2px 9px;border-radius:20px;border:1px solid var(--line);color:var(--txt);cursor:pointer;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;margin:2px}
+.chip:hover{border-color:var(--red)}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;background:var(--card2);color:var(--mut);font-size:12px;margin:2px}
+.texto{white-space:pre-wrap;line-height:1.7;font-family:Georgia,'Times New Roman',serif;font-size:16px;margin-top:6px}
+.grid-form{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.grid-form .full{grid-column:1/-1}
+.grid-form input,.grid-form select,.grid-form textarea{width:100%}
+.item{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap}
+.item:last-child{border:0}
+.index-card{background-color:#141416;background-image:linear-gradient(to bottom,transparent 35px,#e0334a 35px,#e0334a 37px,transparent 37px);background-repeat:no-repeat;color:#f2f2f2;border:1px solid #2a2a2f;border-radius:4px;box-shadow:0 4px 14px rgba(0,0,0,.6);padding:50px 28px 22px 28px;margin:6px 0 16px;position:relative}
+.index-card b,.index-card h2{color:#f2f2f2}
+.index-card .mut{color:#8b8b94}
+.index-card .texto{line-height:28px;color:#f2f2f2}
+.index-card input,.index-card select{background:transparent;color:#f2f2f2;border:0;border-bottom:1px solid #3a3a40;border-radius:0;padding:4px 2px;height:28px;font-family:Georgia,'Times New Roman',serif}
+.index-card textarea{background:transparent;color:#f2f2f2;border:0;padding:0;line-height:28px;font-family:Georgia,'Times New Roman',serif;font-size:16px;resize:vertical}
+.index-card .tag{background:#1e1e21;color:#8b8b94}
+.index-card .chip{color:#f2f2f2;border-color:#3a3a40;background:#1e1e21}
+.index-card .id{color:#e0334a}
+.idx-head{position:absolute;top:6px;left:28px;right:28px;height:26px;display:flex;align-items:center}
+.idx-head input,.idx-title{background:transparent;border:0;border-radius:0;padding:0;height:26px;font-size:17px;font-weight:700;color:#f2f2f2;font-family:Georgia,'Times New Roman',serif;width:100%;outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.idx-head input::placeholder{color:#6a6a74;font-weight:400}
+.empty{color:var(--mut);text-align:center;padding:18px}
+.pill{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--card2);border:1px solid var(--red);padding:10px 16px;border-radius:12px;opacity:0;transition:.3s;pointer-events:none;max-width:90%;text-align:center}
+.pill.show{opacity:1}
+@media (max-width:760px){
+  .wrap{grid-template-columns:1fr}
+  aside{position:static;max-height:260px}
+  .grid-form{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="row" style="justify-content:space-between">
+    <h1>ZETTEL<span>KASTEN</span></h1>
+    <div class="row">
+      <button onclick="novaNota(null)">+ Nova nota</button>
+      <button class="ghost" onclick="aleatoria()">Nota aleatória</button>
+    </div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <input id="q" placeholder="Buscar por texto, número ou palavra-chave" value="" oninput="buscar(this.value)" style="flex:1;min-width:200px">
+    <button id="bNotas" class="ghost" onclick="aba('notas')">Notas</button>
+    <button class="ghost" onclick="exportarBackup()">Exportar backup</button>
+    <label style="padding:9px 14px;border:1px solid var(--line);border-radius:10px;cursor:pointer;font-size:14px;color:var(--mut)">Importar backup<input type="file" accept=".json,application/json" onchange="importarBackup(this.files[0]);this.value=''" style="display:none"></label>
+    <button id="bIndice" class="ghost" onclick="aba('indice')">Índice</button>
+    <button id="bGrafo" class="ghost" onclick="aba('grafo')">Grafo</button>
+  </div>
+</header>
+<div class="wrap">
+  <aside id="aside"></aside>
+  <main id="main"></main>
+</div>
+<div class="pill" id="pill"></div>
+
+<script>
+const KEY='zettel-v1';
+let db={notas:[],seed:false};
+try{Object.assign(db,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m){const p=$('pill');p.textContent=m;p.classList.add('show');clearTimeout(p._t);p._t=setTimeout(()=>p.classList.remove('show'),3000)}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Espaço cheio no navegador')}render()}
+
+let S={modo:'ver',sel:null,q:'',aba:'notas',pai:null,conf:null};
+
+/* ---------- Ordenação e numeração ---------- */
+const partes=id=>String(id).match(/\d+|[a-z]+/g)||[];
+function cmpId(a,b){
+  const A=partes(a),B=partes(b);
+  for(let i=0;i<Math.max(A.length,B.length);i++){
+    if(A[i]===undefined) return -1;
+    if(B[i]===undefined) return 1;
+    const x=A[i],y=B[i],nx=/^\d/.test(x),ny=/^\d/.test(y);
+    if(nx&&ny){if(+x!==+y) return +x-+y}
+    else if(x!==y) return x<y?-1:1;
+  }
+  return 0;
+}
+// Notas de explicação (do próprio app) aparecem em verde para não se confundirem com as suas
+const TITULOS_EXP=['Cada nota tem um número próprio','Ramificação: uma ideia que nasce de outra','Desdobramento dentro da ramificação','Ligações, não pastas','Nota de literatura: a fonte com as suas palavras'];
+const isExp=n=>!!n.exp||TITULOS_EXP.includes(n.titulo);
+const VERDE='#3ec07a';
+const getN=id=>db.notas.find(n=>n.id===id);
+const existe=id=>db.notas.some(n=>n.id===id);
+
+// Raiz: próximo número. Ramificação: pai + letra (se pai termina em número) ou pai + número (se termina em letra)
+function novoId(pai){
+  if(!pai){
+    const nums=db.notas.filter(n=>/^\d+$/.test(n.id)).map(n=>+n.id);
+    return String((nums.length?Math.max(...nums):0)+1);
+  }
+  if(/\d$/.test(pai)){
+    for(let i=0;i<26;i++){const id=pai+String.fromCharCode(97+i);if(!existe(id))return id}
+  }
+  for(let i=1;;i++){const id=pai+i;if(!existe(id))return id}
+}
+const ordenadas=()=>db.notas.slice().sort((a,b)=>cmpId(a.id,b.id));
+const citadaPor=id=>db.notas.filter(o=>(o.links||[]).includes(id)).sort((a,b)=>cmpId(a.id,b.id));
+const ramificacoes=id=>db.notas.filter(o=>o.pai===id).sort((a,b)=>cmpId(a.id,b.id));
+function indice(){
+  const m={};
+  db.notas.forEach(n=>(n.tags||[]).forEach(t=>{(m[t]=m[t]||[]).push(n.id)}));
+  return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0],'pt-BR'));
+}
+
+/* ---------- Ações ---------- */
+function aba(a){S.aba=a;render()}
+function buscar(v){S.q=v;renderAside()}
+function ver(id){S.modo='ver';S.leitor=true;S.lk=[];S.prints=[];S.sel=id;S.aba='notas';render();window.scrollTo({top:0,behavior:'smooth'})}
+function novaNota(pai){S.modo='nova';S.prints=[];S.lk=[];S.pai=pai;S.sel=null;S.aba='notas';render()}
+function editar(id){S.modo='editar';S.sel=id;S.lk=[...(getN(id).links||[])];S.prints=[...(getN(id).imgs||[])];render()}
+function cancelar(){S.modo='ver';render()}
+function aleatoria(){
+  if(!db.notas.length) return toast('Ainda não há notas');
+  const n=db.notas[Math.floor(Math.random()*db.notas.length)];
+  ver(n.id);
+}
+function salvarNota(){
+  const texto=$('n-texto').value.trim();
+  if(!texto) return toast('Escreva a nota');
+  const titulo=$('n-titulo').value.trim()||texto.slice(0,50);
+  const tipo=$('n-tipo').value;
+  let ref=($('n-ref').value||'').trim();
+  if(ref&&!/^https?:\/\//.test(ref)) ref='https://'+ref;
+  const tags=$('n-tags').value.split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+  const links=(S.lk||[]).filter(l=>!expId(l));
+  const invalidos=links.filter(l=>!existe(l));
+  if(invalidos.length) return toast('Não encontrei: '+invalidos.join(', '));
+  if(S.modo==='editar'){
+    const n=getN(S.sel);
+    Object.assign(n,{titulo,texto,tipo,tags,ref,imgs:S.prints||[],links:links.filter(l=>l!==n.id)});
+    toast('Nota atualizada');
+  } else {
+    const pai=$('n-pai')?.value||null;
+    const id=novoId(pai);
+    db.notas.push({id,titulo,texto,tipo,tags,ref,imgs:S.prints||[],links:links.filter(l=>l!==id),pai,ts:Date.now()});
+    S.sel=id;
+    toast('Nota '+id+' criada');
+  }
+  S.modo='ver';
+  save();
+}
+function apagarNota(id){
+  if(S.conf!==id){S.conf=id;render();setTimeout(()=>{if(S.conf===id){S.conf=null;render()}},4000);return}
+  db.notas=db.notas.filter(n=>n.id!==id);
+  db.notas.forEach(n=>{
+    n.links=(n.links||[]).filter(l=>l!==id);
+    if(n.pai===id) n.pai=null;
+  });
+  S.conf=null;S.sel=null;S.modo='ver';
+  save();toast('Nota apagada');
+}
+
+/* ---------- Vistas ---------- */
+function linhaLista(n){
+  return `<div class="lin ${S.sel===n.id?'on':''} ${lkAtivo(n.id)?'lk':''}" onclick="clicar('${n.id}')"><span class="id" style="${isExp(n)?'color:'+VERDE:''}">${esc(n.id)}</span><span style="${isExp(n)?'color:'+VERDE:''}">${esc(n.titulo)}</span></div>`;
+}
+function renderAside(){
+  const q=S.q.trim().toLowerCase();
+  const lista=ordenadas().filter(n=>!q||(n.id+' '+n.titulo+' '+n.texto+' '+(n.tags||[]).join(' ')).toLowerCase().includes(q));
+  $('aside').innerHTML=lista.length?lista.map(linhaLista).join(''):'<div class="mut" style="padding:10px">Nenhuma nota encontrada.</div>';
+  document.querySelectorAll('header button.ghost, header button:not(.ghost)').forEach(()=>{});
+  $('bNotas').className=S.aba==='notas'?'on':'ghost';
+  $('bIndice').className=S.aba==='indice'?'on':'ghost';
+}
+function formNotaAntiga(){
+  const edit=S.modo==='editar'?getN(S.sel):null;
+  const pai=S.modo==='nova'?S.pai:null;
+  const opcoesPai=ordenadas().map(n=>`<option value="${esc(n.id)}" ${n.id===pai?'selected':''}>${esc(n.id)} · ${esc(n.titulo)}</option>`).join('');
+  return `
+  <div class="card index-card">
+    <div class="idx-head"><input id="n-titulo" placeholder="Título da nota (a ideia em uma frase)" value="${esc(edit?edit.titulo:'')}"></div>
+    <b>${edit?'Editar nota '+esc(edit.id):'Nova nota'}</b>
+    <div class="mut" style="margin:6px 0 12px">Uma ideia por nota, escrita com suas palavras. Depois, ligue-a a outras notas.</div>
+    <div class="grid-form">
+      
+      <select id="n-tipo">
+        <option value="permanente" ${!edit||edit.tipo!=='literatura'?'selected':''}>Nota permanente (minha ideia)</option>
+        <option value="literatura" ${edit&&edit.tipo==='literatura'?'selected':''}>Nota de literatura (de livro, aula ou vídeo)</option>
+      </select>
+      ${edit?`<div class="mut" style="display:flex;align-items:center">Número: <span class="id" style="margin-left:6px">${esc(edit.id)}</span></div>`
+        :`<select id="n-pai">
+            <option value="">Nota raiz (novo número)</option>
+            ${opcoesPai}
+          </select>`}
+      <textarea id="n-texto" class="full" rows="12" placeholder="Escreva com suas palavras...">${esc(edit?edit.texto:'')}</textarea>
+      <input id="n-tags" class="full" placeholder="Palavras-chave separadas por vírgula (ex.: diodo, polarização)" value="${esc(edit?(edit.tags||[]).join(', '):'')}">
+      <input id="n-ref" class="full" placeholder="Link de referência (ex.: vídeo do YouTube)" value="${esc(edit?edit.ref||'':'')}">
+      <input id="n-links" class="full" placeholder="Ligar a notas (números separados por vírgula, ex.: 1a, 2b3)" value="${esc(edit?(edit.links||[]).join(', '):'')}">
+      <button class="full" onclick="salvarNota()">Salvar</button>
+      <button class="full ghost" onclick="cancelar()">Cancelar</button>
+    </div>
+  </div>`;
+}
+function chip(id){return `<span class="chip" onclick="ver('${esc(id)}')">${esc(id)}</span>`}
+function vNota(n){
+  const pai=n.pai&&getN(n.pai);
+  const cit=citadaPor(n.id), ram=ramificacoes(n.id);
+  return `
+  <div class="card index-card">
+    <div class="row" style="justify-content:space-between">
+      <div class="idx-head"><span class="idx-title" style="${isExp(n)?'color:'+VERDE:''}">${esc(n.titulo)}</span></div><span class="id" style="font-size:18px">${esc(n.id)}</span>
+      <span class="mut">${n.tipo==='literatura'?'Nota de literatura':'Nota permanente'}</span>
+    </div>
+    
+    ${pai?`<div class="mut">Continua de ${chip(pai.id)} ${esc(pai.titulo)}</div>`:''}
+    <div class="texto">${esc(n.texto)}</div>
+    ${(n.imgs||[]).length?`<div class="thumbs">${n.imgs.map(s=>`<img src="${s}" alt="print" onclick="verPrint(this.src)" style="cursor:zoom-in">`).join('')}</div>`:''}
+    ${(n.tags||[]).length?`<div style="margin-top:12px">${n.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>`:''}
+${n.ref?`<div style="margin-top:12px"><a href="${esc(n.ref)}" target="_blank" rel="noopener" style="display:inline-block;background:var(--red);color:#fff;padding:8px 14px;border-radius:10px;text-decoration:none;font-weight:600">▶ Abrir referência</a></div>`:''}
+    <div class="row" style="margin-top:16px">
+      <button class="ghost" onclick="editar('${n.id}')">Editar</button>
+      ${isExp(n)?'':`<button class="ghost" onclick="novaNota('${n.id}')">Continuar esta nota</button>`}
+      <button class="ghost" style="${S.conf===n.id?'color:var(--red);border-color:var(--red)':''}" onclick="apagarNota('${n.id}')">${S.conf===n.id?'Toque de novo para apagar':'Apagar'}</button>
+    </div>
+  </div>
+  <div class="card">
+    <b>Ligações</b>
+    <div class="mut" style="margin-top:8px">Esta nota aponta para: ${(n.links||[]).filter(l=>!expId(l)).length?(n.links.filter(l=>!expId(l)).map(chip).join(' ')):'nenhuma'}</div>
+    <div class="mut" style="margin-top:8px">Citada por: ${cit.length?cit.map(o=>chip(o.id)).join(' '):'ainda ninguém'}</div>
+  </div>
+  <div class="card">
+    <b>Ramificações</b>
+    ${ram.length?ram.map(f=>`<div class="item"><span>${chip(f.id)} ${esc(f.titulo)}</span></div>`).join(''):'<div class="mut" style="margin-top:6px">Nenhuma ainda. Use "Continuar esta nota" para desenvolver uma ideia a partir dela.</div>'}
+  </div>`;
+}
+function vIndice(){
+  const idx=indice();
+  return `
+  <div class="card">
+    <b>Índice de palavras-chave</b>
+    <div class="mut" style="margin:6px 0 10px">Cada palavra-chave leva às notas em que aparece. É a porta de entrada para o sistema.</div>
+    ${idx.length?idx.map(([t,ids])=>`
+      <div class="item"><b>${esc(t)}</b><span>${ids.slice().sort(cmpId).map(chip).join(' ')}</span></div>`).join(''):'<div class="empty">Adicione palavras-chave às notas para montar o índice.</div>'}
+  </div>`;
+}
+function render(){
+  $('bNotas').className=S.aba==='notas'?'on':'ghost';
+  $('bIndice').className=S.aba==='indice'?'on':'ghost';
+  renderAside();
+  $('bGrafo').className=S.aba==='grafo'?'on':'ghost';
+  let corpo;
+  if(S.aba==='grafo') corpo=vGrafo();
+  else if(S.aba==='indice') corpo=vIndice();
+  else if(S.modo==='nova'||S.modo==='editar') corpo=formNota();
+  else if(S.sel&&getN(S.sel)) corpo=vNota(getN(S.sel));
+  else corpo='<div class="card empty">Escolha uma nota à esquerda ou crie uma nova. Comece pela ideia principal e depois ramifique.</div>';
+  $('main').innerHTML=corpo;
+  if(S.aba==='grafo') desenhaGrafo();
+  if(S.modo==='nova'||S.modo==='editar'){updateLinkBox();updatePrintsBox();}
+  const antigo=$('leitor'); if(antigo) antigo.remove();
+  if(S.modo==='ver'&&S.leitor&&S.sel&&getN(S.sel)) abrirLeitor();
+}
+
+/* ---------- Início: exemplos para entender o método ---------- */
+/* ---------- Grafo de conexões (estilo Obsidian) ---------- */
+/* ---------- Formulário minimalista com ligação por clique ---------- */
+/* ---------- Prints nas notas ---------- */
+async function comprimirImg(blob){
+  const url=URL.createObjectURL(blob);
+  return new Promise(res=>{
+    const img=new Image();
+    img.onload=()=>{
+      const k=Math.min(1,1200/img.width);
+      const c=document.createElement('canvas');
+      c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg',0.8));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);res(null)};
+    img.src=url;
+  });
+}
+async function addPrints(files){
+  const lista=Array.from(files||[]).filter(f=>f.type&&f.type.startsWith('image/'));
+  S.prints=S.prints||[];
+  for(const f of lista){const d=await comprimirImg(f);if(d) S.prints.push(d)}
+  updatePrintsBox();
+}
+function tirarPrint(i){S.prints.splice(i,1);updatePrintsBox()}
+function updatePrintsBox(){
+  const b=$('printsBox'); if(!b) return;
+  b.innerHTML=(S.prints||[]).map((s,i)=>`<div style="position:relative"><img src="${s}" alt="print" style="width:100%;height:110px;object-fit:cover;border-radius:6px;border:1px solid #2a2a2f;display:block"><button class="ghost" style="position:absolute;top:4px;right:4px;padding:2px 8px" onclick="tirarPrint(${i})">×</button></div>`).join('');
+}
+function verPrint(src){
+  const d=document.createElement('div');
+  d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px;cursor:zoom-out';
+  d.innerHTML='<img src="'+src+'" style="max-width:100%;max-height:100%;border-radius:8px">';
+  d.onclick=()=>d.remove();
+  document.body.appendChild(d);
+}
+document.addEventListener('paste',e=>{
+  if(!(S.modo==='nova'||S.modo==='editar')) return;
+  const itens=Array.from(e.clipboardData?.items||[]).filter(i=>i.type.startsWith('image/'));
+  if(!itens.length) return;
+  e.preventDefault();
+  addPrints(itens.map(i=>i.getAsFile()).filter(Boolean));
+});
+/* ---------- Leitor em tela cheia ---------- */
+function abrirLeitor(){
+  const n=getN(S.sel);
+  const lista=ordenadas();
+  const i=lista.findIndex(x=>x.id===n.id);
+  const ant=lista[i-1], prox=lista[i+1];
+  const d=document.createElement('div');
+  d.id='leitor';
+  d.style.cssText='position:fixed;inset:0;background:#0b0b0c;z-index:40;overflow:auto;padding:12px 16px';
+  d.innerHTML=`<div style="max-width:780px;margin:0 auto">
+    <div class="row" style="justify-content:space-between;position:sticky;top:0;background:#0b0b0c;padding:8px 0 12px;z-index:2">
+      <button class="ghost" onclick="fecharLeitor()">✕ Fechar</button>
+      <div class="row">
+        ${ant?`<button class="ghost" onclick="ver('${ant.id}')">← ${esc(ant.id)}</button>`:''}
+        ${prox?`<button class="ghost" onclick="ver('${prox.id}')">${esc(prox.id)} →</button>`:''}
+      </div>
+    </div>
+    ${vNota(n)}
+  </div>`;
+  document.body.appendChild(d);
+  d.scrollTop=0;
+}
+function fecharLeitor(){S.leitor=false;render()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.leitor){S.leitor=false;render()}});
+
+/* ---------- Backup de longo prazo ---------- */
+async function exportarBackup(){
+  const dados={app:'zettelkasten',versao:1,exportado:new Date().toISOString(),notas:db.notas};
+  const blob=new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});
+  try{
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='zettelkasten-backup-'+hojeISO()+'.json';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    db.ultimoBackup=hojeISO();save();
+    toast('Backup salvo');
+  }catch(e){toast('Não foi possível exportar o backup')}
+}
+async function importarBackup(f){
+  if(!f) return;
+  try{
+    const d=JSON.parse(await f.text());
+    if(!d||!Array.isArray(d.notas)) return toast('Arquivo de backup inválido');
+    const novas=d.notas.filter(n=>n&&n.id&&!existe(n.id));
+    db.notas=db.notas.concat(novas);
+    save();
+    toast(novas.length?novas.length+' nota(s) importada(s)':'Nenhuma nota nova no arquivo');
+  }catch(e){
+    toast('Não foi possível ler o arquivo');
+  }
+}
+
+const expId=id=>{const x=getN(id);return !!x&&isExp(x)};
+function lkAtivo(id){return (S.modo==='nova'||S.modo==='editar')&&(S.lk||[]).includes(id)}
+function clicar(id){
+  if(S.modo==='nova'||S.modo==='editar'){
+    if(S.modo==='editar'&&id===S.sel) return;
+    if(expId(id)) return toast('Notas de explicação não podem ser ligadas');
+    S.lk=S.lk||[];
+    S.lk=S.lk.includes(id)?S.lk.filter(x=>x!==id):S.lk.concat(id);
+    renderAside();updateLinkBox();
+    return;
+  }
+  ver(id);
+}
+function tirarLink(id){S.lk=(S.lk||[]).filter(x=>x!==id);renderAside();updateLinkBox()}
+function updateLinkBox(){
+  const b=$('linksBox'); if(!b) return;
+  const l=S.lk||[];
+  b.innerHTML=l.length?l.map(i=>`<span class="chip" onclick="tirarLink('${esc(i)}')">${esc(i)} ×</span>`).join(' '):'<span class="mut">Clique nas notas ao lado para ligar</span>';
+}
+function formNota(){
+  const edit=S.modo==='editar'?getN(S.sel):null;
+  const pai=S.modo==='nova'?S.pai:null;
+  const opcoesPai=ordenadas().filter(n=>!isExp(n)).map(n=>`<option value="${esc(n.id)}" ${n.id===pai?'selected':''}>${esc(n.id)} · ${esc(n.titulo)}</option>`).join('');
+  return `
+  <div class="card index-card">
+    <div class="idx-head"><input id="n-titulo" placeholder="Título" value="${esc(edit?edit.titulo:'')}"></div>
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <span class="mut">${edit?'Editar '+esc(edit.id):'Nova nota'}</span>
+      <div class="row">
+        <select id="n-tipo" style="font-size:13px;padding:4px 8px">
+          <option value="permanente" ${!edit||edit.tipo!=='literatura'?'selected':''}>Permanente</option>
+          <option value="literatura" ${edit&&edit.tipo==='literatura'?'selected':''}>Literatura</option>
+        </select>
+        ${edit?'':`<select id="n-pai" style="font-size:13px;padding:4px 8px"><option value="">Raiz</option>${opcoesPai}</select>`}
+      </div>
+    </div>
+    <textarea id="n-texto" rows="10" style="width:100%" placeholder="Escreva com suas palavras...">${esc(edit?edit.texto:'')}</textarea>
+    <input id="n-tags" style="width:100%;margin-top:10px" placeholder="palavras-chave, separadas por vírgula" value="${esc(edit?(edit.tags||[]).join(', '):'')}">
+    <input id="n-ref" style="width:100%;margin-top:8px" placeholder="link de referência (opcional)" value="${esc(edit?edit.ref||'':'')}">
+    <div class="row" style="margin-top:12px;justify-content:space-between"><span class="mut">Prints (cole com Ctrl+V)</span><label style="font-size:13px;color:#8b8b94;cursor:pointer">+ imagem<input type="file" accept="image/*" multiple onchange="addPrints(this.files);this.value=''" style="display:none"></label></div>
+    <div id="printsBox" class="thumbs" style="margin-top:8px"></div>
+    <div id="linksBox" class="row" style="margin-top:12px;min-height:26px"></div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">
+      <button class="ghost" onclick="cancelar()">Cancelar</button>
+      <button onclick="salvarNota()">Salvar</button>
+    </div>
+  </div>`;
+}
+
+function arestasGrafo(){
+  const ids=new Set(db.notas.map(n=>n.id)), arr=[];
+  db.notas.forEach(n=>{
+    if(n.pai&&ids.has(n.pai)&&!expId(n.pai)&&!isExp(n)) arr.push([n.pai,n.id,'pai']);
+    (n.links||[]).forEach(l=>{if(ids.has(l)&&l!==n.id&&!expId(l)&&!isExp(n)) arr.push([n.id,l,'link'])});
+  });
+  return arr;
+}
+function layoutGrafo(){
+  S.pos=S.pos||{};
+  const ids=db.notas.map(n=>n.id);
+  Object.keys(S.pos).forEach(k=>{if(!ids.includes(k)) delete S.pos[k]});
+  ids.forEach(id=>{if(!S.pos[id]) S.pos[id]={x:450+(Math.random()-.5)*240,y:300+(Math.random()-.5)*160}});
+  const ed=arestasGrafo();
+  for(let it=0;it<200;it++){
+    ids.forEach(id=>{S.pos[id].fx=0;S.pos[id].fy=0});
+    for(let i=0;i<ids.length;i++)for(let j=i+1;j<ids.length;j++){
+      const a=S.pos[ids[i]],b=S.pos[ids[j]];
+      const dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy+1,d=Math.sqrt(d2);
+      const f=3000/d2;
+      a.fx+=dx/d*f;a.fy+=dy/d*f;b.fx-=dx/d*f;b.fy-=dy/d*f;
+    }
+    ed.forEach(([s,t])=>{
+      const a=S.pos[s],b=S.pos[t];
+      const dx=b.x-a.x,dy=b.y-a.y,d=Math.sqrt(dx*dx+dy*dy)||1;
+      const f=(d-120)*0.03;
+      a.fx+=dx/d*f;a.fy+=dy/d*f;b.fx-=dx/d*f;b.fy-=dy/d*f;
+    });
+    ids.forEach(id=>{
+      const p=S.pos[id];
+      p.fx+=(450-p.x)*0.004;p.fy+=(300-p.y)*0.004;
+      p.x=Math.max(30,Math.min(870,p.x+Math.max(-6,Math.min(6,p.fx))));
+      p.y=Math.max(30,Math.min(570,p.y+Math.max(-6,Math.min(6,p.fy))));
+    });
+  }
+}
+function vGrafo(){
+  return `
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px"><b>Grafo de conexões</b><span class="mut">${db.notas.length} notas · ${arestasGrafo().length} conexões</span></div>
+    <svg id="gsvg" viewBox="0 0 900 600" style="width:100%;height:auto;background:#0f0f11;border-radius:12px;touch-action:none;display:block"></svg>
+    <div class="mut" style="margin-top:8px">Arraste os nós para organizar. Toque em um nó para abrir a nota. Linha vermelha: ramificação. Tracejada: ligação. Verde: notas de explicação.</div>
+  </div>`;
+}
+function desenhaGrafo(){
+  const svg=$('gsvg'); if(!svg) return;
+  layoutGrafo();
+  const N=db.notas;
+  const cor=n=>isExp(n)?VERDE:(n.tipo==='literatura'?'#8fa3c7':'#e0334a');
+  const linhas=arestasGrafo().map(([s,t,k])=>`<line data-s="${s}" data-t="${t}" x1="${S.pos[s].x}" y1="${S.pos[s].y}" x2="${S.pos[t].x}" y2="${S.pos[t].y}" stroke="${k==='pai'?'#e0334a':'#6a6a74'}" stroke-width="${k==='pai'?2:1.4}" ${k==='link'?'stroke-dasharray="6 5"':''} opacity="0.85"/>`).join('');
+  const nos=N.map(n=>{
+    const p=S.pos[n.id], t=(n.titulo||'').slice(0,22);
+    return `<g class="gn" data-id="${esc(n.id)}" transform="translate(${p.x},${p.y})" style="cursor:grab">
+      <circle r="${S.sel===n.id?16:12}" fill="${cor(n)}" stroke="#f2f2f2" stroke-width="${S.sel===n.id?2:0}"/>
+      <text y="-18" text-anchor="middle" fill="#f2f2f2" font-size="12" font-family="ui-monospace,Menlo,Consolas,monospace">${esc(n.id)}</text>
+      <text y="30" text-anchor="middle" fill="#8b8b94" font-size="11">${esc(t)}</text>
+    </g>`;
+  }).join('');
+  svg.innerHTML=linhas+nos;
+  attachDrag(svg);
+}
+function moveNo(id){
+  const p=S.pos[id];
+  const g=document.querySelector('#gsvg .gn[data-id="'+id+'"]');
+  if(g) g.setAttribute('transform','translate('+p.x+','+p.y+')');
+  document.querySelectorAll('#gsvg line').forEach(l=>{
+    if(l.dataset.s===id){l.setAttribute('x1',p.x);l.setAttribute('y1',p.y)}
+    if(l.dataset.t===id){l.setAttribute('x2',p.x);l.setAttribute('y2',p.y)}
+  });
+}
+function attachDrag(svg){
+  let drag=null;
+  const ponto=e=>{const r=svg.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width*900,y:(e.clientY-r.top)/r.height*600}};
+  svg.onpointerdown=e=>{
+    const g=e.target.closest('.gn'); if(!g) return;
+    drag={id:g.dataset.id,moved:false,x0:e.clientX,y0:e.clientY};
+    svg.setPointerCapture(e.pointerId);
+  };
+  svg.onpointermove=e=>{
+    if(!drag) return;
+    if(Math.abs(e.clientX-drag.x0)+Math.abs(e.clientY-drag.y0)>4) drag.moved=true;
+    if(!drag.moved) return;
+    const p=ponto(e), s=S.pos[drag.id];
+    s.x=Math.max(20,Math.min(880,p.x)); s.y=Math.max(20,Math.min(580,p.y));
+    moveNo(drag.id);
+  };
+  svg.onpointerup=()=>{
+    if(!drag) return;
+    const id=drag.id, mexeu=drag.moved;
+    drag=null;
+    if(!mexeu) ver(id);
+  };
+}
+
+// Remove as notas de explicação do app: ficam só as suas notas, e nenhum link aponta para elas
+db.notas=db.notas.filter(n=>!isExp(n));
+{
+  const validos=new Set(db.notas.map(n=>n.id));
+  db.notas.forEach(n=>{
+    n.links=(n.links||[]).filter(l=>validos.has(l));
+    if(n.pai&&!validos.has(n.pai)) n.pai=null;
+  });
+}
+try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){}
+if(!db.seed){
+  db.seed=true;
+  if(false){
+    db.notas=[
+      {id:'1',titulo:'Cada nota tem um número próprio',texto:'Cada nota recebe um número único e permanente. O número não diz a importância da ideia: ele só serve para encontrá-la e ligá-la a outras.',tipo:'permanente',tags:['método','zettelkasten'],links:[],pai:null,ts:Date.now()},
+      {id:'1a',titulo:'Ramificação: uma ideia que nasce de outra',texto:'Quando uma ideia nasce de outra, a nova nota recebe o número da original seguido de uma letra. Assim fica visível de onde ela veio.',tipo:'permanente',tags:['método','numeração'],links:['1'],pai:'1',ts:Date.now()},
+      {id:'1a1',titulo:'Desdobramento dentro da ramificação',texto:'Um desdobramento de 1a recebe um número. A sequência alterna letras e números: 1, 1a, 1a1, 1a1a... Cada passo mostra um nível de profundidade.',tipo:'permanente',tags:['numeração'],links:[],pai:'1a',ts:Date.now()},
+      {id:'2',titulo:'Ligações, não pastas',texto:'O sistema cresce pelas ligações entre notas, não por pastas. Uma nota pode apontar para várias outras, e cada nota mostra quem a cita.',tipo:'permanente',tags:['ligações','método'],links:['1','1a'],pai:null,ts:Date.now()},
+      {id:'3',titulo:'Nota de literatura: a fonte com as suas palavras',texto:'Ao estudar um livro, aula ou vídeo, registre a fonte em uma nota de literatura, com suas palavras. As ideias próprias ficam em notas permanentes, ligadas a ela.',tipo:'literatura',tags:['fonte','leitura'],links:['2'],pai:null,ts:Date.now()}
+    ];
+  }
+}
+render();
+</script>
+<script>if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'))}</script>
+</body>
+</html>
